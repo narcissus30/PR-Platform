@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PR Crux, Learnings & Nuggets — Interactive Learning Studio</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #1e293b;
+      --card: #162033;
+      --card-hover: #1d2b44;
+      --border: #2b3b57;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 100vh;
+    }
+    aside {
+      background: #0b1120;
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    main {
+      padding: 28px 36px 80px;
+      max-width: 1050px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Header & Gamification HUD */
+    .brand-box h1 {
+      font-size: 1.15rem;
+      margin: 0 0 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-box p {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .hud-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .rank-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .xp-text { font-size: 0.85rem; font-weight: 700; color: var(--warn); }
+    .progress-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: #0f172a;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      transition: width 0.35s ease;
+    }
+    .hud-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* Nav */
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      padding: 9px 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.86rem;
+      transition: all 0.15s;
+    }
+    .nav-btn:hover { background: var(--card); color: var(--text); }
+    .nav-btn.active {
+      background: var(--card-hover);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .nav-btn .status-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+    .nav-btn.done .status-dot {
+      background: var(--success);
+      border-color: var(--success);
+      color: #052e16;
+      font-weight: 800;
+    }
+    .nav-meta { font-size: 0.72rem; opacity: 0.8; white-space: nowrap; }
+
+    /* Mode Tabs & Top Bar */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mode-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .pill-btn.active {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+    .search-input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 999px;
+      min-width: 240px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--accent); }
+
+    /* Module Header */
+    .module-hero {
+      background: linear-gradient(135deg, rgba(56,189,248,0.12), rgba(129,140,248,0.12));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .module-hero h2 { margin: 0 0 6px; font-size: 1.5rem; }
+    .module-hero p { margin: 0; color: var(--muted); font-size: 0.92rem; max-width: 650px; }
+
+    .btn {
+      background: var(--accent);
+      color: #0f172a;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.86rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { opacity: 0.92; }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-success { background: var(--success); color: #052e16; }
+
+    /* Content Cards & Checklists */
+    .section-group { margin-bottom: 28px; }
+    .section-title {
+      font-size: 1.12rem;
+      margin: 0 0 12px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      transition: border-color 0.2s, transform 0.15s;
+      position: relative;
+    }
+    .card.checked {
+      border-color: rgba(34, 197, 94, 0.55);
+      background: rgba(34, 197, 94, 0.05);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .card-title { font-weight: 700; font-size: 0.98rem; margin: 0; }
+    .card-sub { font-size: 0.78rem; color: var(--accent-2); margin-bottom: 6px; font-weight: 600; }
+    .card-body { font-size: 0.88rem; color: #cbd5e1; }
+    .card-body ul { padding-left: 18px; margin: 6px 0; }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--muted);
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+    .note-box {
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 3px solid var(--warn);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      margin: 10px 0;
+      color: #fde68a;
+    }
+
+    /* Custom Checkbox */
+    .check-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.76rem;
+      color: var(--muted);
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 4px 9px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+    .card.checked .check-toggle {
+      background: var(--success);
+      color: #052e16;
+      border-color: var(--success);
+      font-weight: 700;
+    }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; margin: 12px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      background: var(--card);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { background: #0b1120; color: var(--accent); font-weight: 700; }
+
+    /* Quiz Box */
+    .quiz-box {
+      background: var(--card);
+      border: 1px solid var(--accent-2);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 28px;
+    }
+    .quiz-q { margin-bottom: 16px; }
+    .quiz-q p { font-weight: 700; margin: 0 0 8px; }
+    .quiz-opt {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    .quiz-opt:hover { border-color: var(--accent); }
+    .quiz-opt.correct { background: rgba(34,197,94,0.2); border-color: var(--success); }
+    .quiz-opt.wrong { background: rgba(239,68,68,0.2); border-color: var(--danger); }
+
+    /* Flashcards */
+    .flashcard-stage {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+    }
+    .flashcard {
+      background: linear-gradient(145deg, #1b2740, #121a2d);
+      border: 1px solid var(--accent);
+      border-radius: 18px;
+      padding: 40px 28px;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      margin-bottom: 16px;
+    }
+    .flashcard small { color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .flashcard h3 { font-size: 1.3rem; margin: 0; }
+    .flashcard p { color: #cbd5e1; margin: 10px 0 0; font-size: 0.96rem; }
+
+    /* Badges Grid */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+    }
+    .badge-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      opacity: 0.45;
+      text-align: center;
+    }
+    .badge-card.unlocked {
+      opacity: 1;
+      border-color: var(--warn);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .badge-icon { font-size: 1.8rem; margin-bottom: 6px; }
+
+    .mobile-toggle { display: none; }
+    @media (max-width: 860px) {
+      .app-shell { grid-template-columns: 1fr; }
+      aside {
+        position: fixed;
+        left: -320px;
+        width: 290px;
+        z-index: 50;
+        transition: left 0.25s;
+      }
+      aside.open { left: 0; }
+      main { padding: 18px 16px 70px; }
+      .mobile-toggle {
+        display: inline-flex;
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--success);
+      color: #052e16;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+  <aside id="sidebar">
+    <div class="brand-box">
+      <h1>PR Crux, Learnings & Nuggets</h1>
+      <p>Curated by Saumya Sharma & Apoorv Singh</p>
+    </div>
+
+    <div class="hud-card">
+      <div class="hud-top">
+        <span class="rank-badge" id="rankBadge">Level 1: PR Rookie</span>
+        <span class="xp-text" id="xpText">0 XP</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="overallProgressFill"></div>
+      </div>
+      <div class="hud-stats">
+        <span id="overallPercent">0% Complete</span>
+        <span id="modulesCount">0 / 9 Modules</span>
+      </div>
+    </div>
+
+    <div class="nav-list" id="navList"></div>
+
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
+      <button class="btn btn-outline" onclick="copyShareSummary()">📤 Copy My Progress Report</button>
+      <button class="btn btn-outline" style="font-size:0.75rem; color:var(--muted);" onclick="resetAllProgress()">Reset Progress</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="top-bar">
+      <div class="mode-pills">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰ Modules</button>
+        <button class="pill-btn active" id="tabLearn" onclick="switchView('learn')">📚 Study Modules</button>
+        <button class="pill-btn" id="tabFlash" onclick="switchView('flashcards')">⚡ Flashcard Arena</button>
+        <button class="pill-btn" id="tabBadges" onclick="switchView('badges')">🏆 Achievements</button>
+      </div>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search leaders, stats, terms..." oninput="handleSearch(this.value)" />
+    </div>
+
+    <div id="mainContent"></div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   COMPLETE REPOSITORY DATA FROM PDF (ALL 9 SECTIONS)
+========================================================= */
+const MODULES = [
+  {
+    id: "m1",
+    num: 1,
+    title: "PR Leaders, Books & Channels",
+    subtitle: "Experts by niche, core frameworks, podcasts, YouTube, Instagram & blogs.",
+    sections: [
+      {
+        heading: "Trust & Measurement ('Prove PR Works')",
+        items: [
+          {
+            id: "m1_edelman",
+            title: "Richard Edelman — President/CEO, Edelman",
+            sub: "linkedin.com/in/richard-edelman-8647306",
+            body: "World's largest independent PR firm. Built the <strong>Edelman Trust Barometer</strong> (25+ year annual cross-country trust survey). <strong>What it solved:</strong> moved PR conversations with CEOs and boards from anecdote to shared data on institutional trust."
+          },
+          {
+            id: "m1_dietrich",
+            title: "Gini Dietrich — Founder/CEO, Spin Sucks",
+            sub: "linkedin.com/in/ginidietrich",
+            body: "Created the <strong>PESO Model</strong> (Paid, Earned, Shared, Owned). <strong>What it solved:</strong> gave practitioners one framework to plan and justify budget across channels instead of treating PR, content, and paid media as separate silos."
+          }
+        ]
+      },
+      {
+        heading: "Going from India to International",
+        items: [
+          {
+            id: "m1_mantri",
+            title: "Nitin Mantri — Group CEO, Avian WE; Regional MD APAC, WE Communications",
+            sub: "First Asian President of ICCO (2019–22); Past President, PRCAI | linkedin.com/in/nitinmantri",
+            body: "Grew a Delhi agency into a WE Communications-affiliated regional operation while building international credibility through ICCO and PRCA leadership roles. Clearest outbound-from-India playbook—worth studying his career path specifically."
+          },
+          {
+            id: "m1_prabhu",
+            title: "Amith Prabhu — Co-founder, School of Communications & Reputation (SCoRe), Mumbai",
+            sub: "linkedin.com/in/amithprabhu",
+            body: "Professionalized reputation management education in India; his book <em>The Pursuit of Reputation</em> is built from 75 practitioner interviews, grounded in the Indian market rather than a US import."
+          }
+        ]
+      },
+      {
+        heading: "Independent / Boutique Practice Building",
+        items: [
+          {
+            id: "m1_garrett",
+            title: "Michelle Garrett — Independent B2B PR Consultant",
+            sub: "Runs #FreelanceChat | linkedin.com/in/prstrategist",
+            body: "Talks openly, with real numbers, about client acquisition and running a one-person consultancy—more directly useful than agency-CEO content once you're ready to go independent."
+          },
+          {
+            id: "m1_strong",
+            title: "Frank Strong — Founder, Sword and the Script",
+            sub: "B2B PR agency | linkedin.com/in/frankstrong",
+            body: "Publishes monthly research roundups sourced from actual studies rather than hot takes. Good standard to hold juniors to."
+          }
+        ]
+      },
+      {
+        heading: "Digital, Content, Personal Branding & Crisis",
+        items: [
+          {
+            id: "m1_breakenridge",
+            title: "Deirdre Breakenridge — CEO, Pure Performance Communications",
+            sub: "Adjunct faculty, Johns Hopkins | linkedin.com/in/deirdrebreakenridge",
+            body: "Bridges PR/marketing/social integration and trains executives directly."
+          },
+          {
+            id: "m1_glogovac",
+            title: "Michelle Glogovac — Founder, The MLG Collective",
+            sub: "Wrote 'How To Get On Podcasts' | linkedin.com/in/michelleglogovac",
+            body: "Niche: podcast guesting as an earned-media channel—directly applicable for building international visibility as a future independent consultant."
+          },
+          {
+            id: "m1_waddington",
+            title: "Stephen Waddington — UK-based PR Advisor & Researcher",
+            sub: "linkedin.com/in/stephenwaddington",
+            body: "Focus on PR management practice and professional standards; useful for the 'how do agencies actually run well' side."
+          },
+          {
+            id: "m1_mckenzie",
+            title: "Tonya McKenzie — Founder, Sand and Shores (Reputation & Crisis)",
+            sub: "Sports/entertainment reputation management | linkedin.com/in/tonyamckenzie",
+            body: "Unusually candid about why PR client relationships succeed or fail, which is rare and useful."
+          }
+        ]
+      },
+      {
+        heading: "7 Essential Books & Frameworks",
+        items: [
+          { id: "m1_b1", title: "1. Spin Sucks — Gini Dietrich", sub: "Framework: PESO Model", body: "Integrating Paid, Earned, Shared, and Owned media." },
+          { id: "m1_b2", title: "2. The New Rules of Marketing and PR — David Meerman Scott", sub: "Framework: Newsjacking", body: "Publishing direct to buyers, bypassing traditional media gatekeepers." },
+          { id: "m1_b3", title: "3. The Pursuit of Reputation — Amith Prabhu & Sujit Patil", sub: "India-specific", body: "Built from 75 practitioner interviews—most directly relevant to the Indian market." },
+          { id: "m1_b4", title: "4. Managing Public Relations / Effective Public Relations", sub: "Grunig & Hunt / Cutlip, Center, Wilcox & Cameron", body: "Academic grounding; gives you the <strong>'four models of PR'</strong> vocabulary that lands well with multinational clients." },
+          { id: "m1_b5", title: "5. Contagious: Why Things Catch On — Jonah Berger", sub: "Framework: STEPPS", body: "Social Currency, Triggers, Emotion, Public, Practical Value, Stories—why content spreads." },
+          { id: "m1_b6", title: "6. On Brand — Aliza Licht", sub: "Personal Branding", body: "Useful both for positioning yourself and for executive clients." },
+          { id: "m1_b7", title: "7. Trust Me, I'm Lying — Ryan Holiday", sub: "Media Manipulation", body: "Not a how-to: a look at how digital media incentives reward outrage over accuracy. Useful for advising clients what not to do." }
+        ]
+      },
+      {
+        heading: "Podcasts, YouTube, Instagram & Blogs",
+        items: [
+          {
+            id: "m1_podcasts",
+            title: "Top 5 PR Podcasts (Best for 'staying updated')",
+            sub: "Senior practitioners publish audio-first or write",
+            body: "<ul><li><strong>The Spin Sucks Podcast</strong> — Gini Dietrich (weekly, strategy & measurement)</li><li><strong>Stories and Strategies for PR</strong> — Doug Downs (expert interviews)</li><li><strong>The PRovoke Podcast</strong> — global industry trends & agency news</li><li><strong>For Immediate Release (FIR)</strong> — Neville Hobson (nearly 2 decades, tech + PR)</li><li><strong>The PR Week</strong> — Steve Barrett & Frank Washkuch (weekly news rundown)</li></ul>"
+          },
+          {
+            id: "m1_yt",
+            title: "YouTube Channels (Thin compared to podcasts)",
+            sub: "Good for fundamentals & clips",
+            body: "<ul><li><strong>Christina Nicholson / Become a Media Maven</strong> — practical media relations & reputation tips</li><li><strong>PR Daily</strong> — news-driven, shorter clips</li><li><strong>Public Relations 101</strong> — education-focused, good for training junior staff</li></ul>"
+          },
+          {
+            id: "m1_ig",
+            title: "Instagram Accounts",
+            sub: "Community, pitching & crisis commentary",
+            body: "<ul><li><strong>@prgirlmanifesto</strong> — community & mentorship, pitching, PR tech, career</li><li><strong>@pointeconnect</strong> (Cristy Verdeja Zaldivar) — weekly video Q&A</li><li><strong>@beforeyouhitsend</strong> — media pitching & editor-outreach tips</li><li><strong>Molly McPherson</strong> — crisis comms commentary (TikTok + IG)</li></ul>"
+          },
+          {
+            id: "m1_blogs",
+            title: "Medium & Dedicated PR Blogs",
+            sub: "Medium's tag has mixed quality; use dedicated blogs",
+            body: "<ul><li><strong>Spin Sucks</strong> (spinsucks.com) — most-cited PR blog overall</li><li><strong>Sword and the Script</strong> (swordandthescript.com) — Frank Strong</li><li><strong>PRovoke Media</strong> (provokemedia.com) — global news & analysis, trade paper of record</li><li><strong>Michelle Garrett's blog</strong> (michellegarrett.com) — freelance/B2B focus</li></ul>"
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "Which book introduces the STEPPS framework for why content spreads?",
+        opts: ["Spin Sucks", "Contagious by Jonah Berger", "On Brand by Aliza Licht", "Trust Me, I'm Lying"],
+        ans: 1,
+        exp: "Jonah Berger's 'Contagious' outlines STEPPS: Social Currency, Triggers, Emotion, Public, Practical Value, Stories."
+      },
+      {
+        q: "What problem did Gini Dietrich's PESO Model solve?",
+        opts: ["Measuring employee morale", "Integrating paid, earned, shared & owned channels instead of treating them as silos", "Winning Cannes awards", "Writing press releases faster"],
+        ans: 1,
+        exp: "PESO gives practitioners a single framework to plan and justify budgets across Paid, Earned, Shared, and Owned media."
+      }
+    ]
+  },
+  {
+    id: "m2",
+    num: 2,
+    title: "Real-Life Case Studies & Timelines",
+    subtitle: "7 landmark PR moments from 1906 to 2018 that rewrote the rules.",
+    sections: [
+      {
+        heading: "7 Historical Turning Points",
+        items: [
+          {
+            id: "m2_c1",
+            title: "1. Radical Transparency Over Cover-Up",
+            sub: "Ivy Lee — Pennsylvania Railroad | October 1906",
+            body: "After a train wreck killed 53 near Atlantic City, Lee broke the norm of stonewalling accidents: he issued a public statement and brought reporters to the site. <em>The New York Times</em> printed it verbatim. <strong>Result:</strong> birth of the modern press release; disclosure beats concealment."
+          },
+          {
+            id: "m2_c2",
+            title: "2. Manufactured Social Proof (Pseudo-Events)",
+            sub: "Edward Bernays — American Tobacco / Lucky Strike | March 1929",
+            body: "Women smoking in public was taboo, so Bernays staged a 'feminist' march where hired women lit cigarettes as 'torches of freedom' during NY's Easter Parade. <strong>Result:</strong> showed PR can engineer events, not just report them; doubled Lucky Strike's female market."
+          },
+          {
+            id: "m2_c3",
+            title: "3. Safety Over Cost in Crisis Response",
+            sub: "Johnson & Johnson (Tylenol) | September 1982",
+            body: "Seven died in Chicago from cyanide-laced Tylenol. J&J recalled 31 million bottles nationwide (~$100M in product) instead of downplaying tampering, then launched tamper-proof packaging 43 days later. <strong>Result:</strong> textbook crisis response; sales fully rebounded within a year."
+          },
+          {
+            id: "m2_c4",
+            title: "4. Owning Failure Publicly",
+            sub: "Domino's Pizza Turnaround | December 2009",
+            body: "Facing 'tastes like cardboard' reviews and stock near $3, Domino's aired customers' harshest complaints on camera, then showed its reformulated recipe. Broke advertising's rule of showing only positives. <strong>Result:</strong> same-store sales rose 14.3% in Q1 2010; stock later crossed $400."
+          },
+          {
+            id: "m2_c5",
+            title: "5. Real-Time Newsjacking",
+            sub: "Oreo / Agency 360i | February 3, 2013",
+            body: "When the Super Bowl Superdome lost power for 34 minutes, Oreo's war-room team tweeted <em>'You can still dunk in the dark'</em> within minutes—no paid media or slow approval chain. <strong>Result:</strong> retweeted ~15,000 times overnight; outshone multi-million-dollar ads."
+          },
+          {
+            id: "m2_c6",
+            title: "6. Peer-to-Peer Virality Bypassing Gatekeepers",
+            sub: "ALS Ice Bucket Challenge | Summer 2014",
+            body: "Grassroots dare (douse, nominate, donate) spread with no agency or media buy. Challenged top-down charity appeals. <strong>Result:</strong> 17M participants, $115M raised for ALS Association ($220M globally) in weeks; funded real gene discovery (NEK1)."
+          },
+          {
+            id: "m2_c7",
+            title: "7. Humor as Crisis Voice",
+            sub: "KFC / Mother London | February 2018",
+            body: "A logistics switch to DHL shut ~800 of 900 UK stores overnight. Instead of a solemn apology, KFC ran a full-page ad rearranging its logo to spell <strong>'FCK'</strong> with a witty mea culpa. <strong>Result:</strong> broke the rule that apologies must be somber; reinforced loyalty."
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "How many Tylenol bottles did J&J recall in 1982, and how long until tamper-proof packaging launched?",
+        opts: ["10M bottles / 90 days", "31M bottles / 43 days", "5M bottles / 14 days", "50M bottles / 180 days"],
+        ans: 1,
+        exp: "J&J recalled 31 million bottles (~$100M) and launched tamper-proof packaging 43 days later."
+      },
+      {
+        q: "Which case proved that owning harsh customer criticism on camera can turn around a brand?",
+        opts: ["Oreo Super Bowl", "Domino's Pizza Turnaround (2009)", "KFC FCK ad", "Pennsylvania Railroad"],
+        ans: 1,
+        exp: "Domino's aired 'tastes like cardboard' complaints in Dec 2009; Q1 2010 same-store sales jumped 14.3%."
+      }
+    ]
+  },
+  {
+    id: "m3",
+    num: 3,
+    title: "Meltwater x LinkedIn: Winning in AI Search",
+    subtitle: "9.5M AI citations across 16 B2B categories & 6 models — how LinkedIn gets cited by AI.",
+    sections: [
+      {
+        heading: "1. Report Snapshot & Key Terms",
+        items: [
+          {
+            id: "m3_snap",
+            title: "Study Scope & Methodology",
+            sub: "Meltwater GenAI Lens | Mar 15 – Apr 5 (2026 study)",
+            body: "<ul><li><strong>9.5 million AI citations</strong> analyzed across <strong>16 B2B categories</strong> and <strong>6 AI models</strong>: Copilot, Google AI Mode, Google AI Overviews, Claude Sonnet 4, ChatGPT-5, Gemini 2.5 Pro.</li><li><strong>Citation:</strong> A domain or URL referenced by an AI model in a generated response.</li><li><strong>Domain Rank / Topic Rank:</strong> Position of a domain among cited sources overall or within a topic category.</li><li><strong>Citation Share:</strong> % of total citations across a model referencing LinkedIn.</li></ul>"
+          },
+          {
+            id: "m3_prompts",
+            title: "Prompts Tested by Category (Evidence Depth)",
+            sub: "Ranked high to low",
+            body: "Tech & SaaS (1,103) • Financial Services & Fintech (494) • Supply Chain & Logistics (301) • Marketing & Advertising (269) • Consulting & Prof Services (175) • HR & Talent (164) • Energy & Sustainability (106) • Education (98) • Legal (94) • Healthcare (91) • Real Estate (56) • Sales (37) • AI & Data Science (29) • Leadership (23) • E-commerce (18) • Startups & VC (17)."
+          }
+        ]
+      },
+      {
+        heading: "2–5. Headline Findings, Domain Shares & Ranks",
+        items: [
+          {
+            id: "m3_headlines",
+            title: "4 Headline Findings",
+            sub: "Why LinkedIn dominates B2B AI citations",
+            body: "<ol><li>LinkedIn is a top-ranked citation source across Copilot, Google AI, and Claude.</li><li><strong>75% of LinkedIn citations come from individual member profiles</strong> rather than Company Pages (even on Copilot & GPT-5).</li><li>LinkedIn ranks in the <strong>Top 5 cited domains for 14 of 16 B2B categories</strong>, and <strong>#1 for AI & Data Science</strong> and <strong>Marketing & Advertising</strong>.</li><li>Citation share grew <strong>26%</strong> (0.76% → 0.96%) across tracked models (Google AI Mode +18.3% growth).</li></ol>"
+          },
+          {
+            id: "m3_vs",
+            title: "LinkedIn vs Other Sources",
+            sub: "Normalized citation shares & source types",
+            body: "<strong>By Domain:</strong> YouTube (1.52%), <strong>LinkedIn (0.53%)</strong>, Reddit (0.44%), G2 (0.41%), Capterra (0.38%), Wikipedia (0.31%), Medium (0.21%).<br><strong>LinkedIn outranks:</strong> Quora 11.5x, Medium 2.5x, Software Advice 2.4x, TechRadar 2.0x, Capterra 1.4x, Reddit 1.2x.<br><strong>By Source Type:</strong> UGC platforms (LinkedIn, Reddit, YouTube) = <strong>47.5%</strong>, Company websites = 18.7%, Peer review sites = 15.0%, Other = 18.8%."
+          },
+          {
+            id: "m3_ranks",
+            title: "LinkedIn's Domain Rank by Category",
+            sub: "Top-5 in 14 of 16 categories",
+            body: "<strong>#1:</strong> AI & Data Science, Marketing & Advertising.<br><strong>#2:</strong> Leadership & Strategy, Sales & Revenue, Supply Chain & Logistics, Consulting & B2B Services, Financial Services & Fintech.<br><strong>#3:</strong> HR & Talent, Legal & Compliance, Technology & SaaS, E-commerce & Retail.<br><strong>#4:</strong> Real Estate, Healthcare & Life Sciences.<br><strong>#5:</strong> Energy & Sustainability."
+          }
+        ]
+      },
+      {
+        heading: "6–8. The AI-Citable Formula & Who Gets Cited",
+        items: [
+          {
+            id: "m3_formula",
+            title: "The AI-Citable Content Formula (Top 24 Articles)",
+            sub: "Structure, length & tone",
+            body: "<ul><li><strong>Bullet lists / numbered items:</strong> 100% | <strong>Clear H2/H3 headings:</strong> 92%</li><li><strong>Names specific companies/tools:</strong> 75% | <strong>Hard numbers & data:</strong> 67%</li><li><strong>Comparison/evaluation framework:</strong> 50% | <strong>'How to choose' guide:</strong> 33% | <strong>Year in title (2025/2026):</strong> 25%</li><li><strong>Ideal article:</strong> 1,500–2,500 words (median 1,725); Title formula '[Number] Best [Category] for [Audience] ([Year])' (46% have a number); Flow: Intro → Criteria → Ranked Items → How to Choose → FAQ; Practitioner tone; Answers a buyer's question directly.</li></ul>"
+          },
+          {
+            id: "m3_archetypes",
+            title: "Why AI Cites & Top 5 Content Archetypes",
+            sub: "3 triggers + overlapping share of top 24 pieces",
+            body: "<strong>Why AI cites:</strong> (1) Anchors opinion in specific, attributed data; (2) Translates data into operational priorities ('here's what to do about it'); (3) Occupies a scarce intersection of two trending topics.<br><strong>Archetypes:</strong> 'Best X' listicles (54%), Side-by-side comparisons (50%), 'How to choose' guides (33%), Educational explainers (17%), Thought leadership + data (8%)."
+          },
+          {
+            id: "m3_who",
+            title: "Who Gets Cited: Profiles, Titles, Format & Freshness",
+            sub: "Quality beats mega-follower counts",
+            body: "<ul><li><strong>Individual vs Company Page:</strong> Google AI Overviews (83.1% vs 16.9%), Google AI Mode (80.2% vs 19.8%), Claude Sonnet 4 (76.8% vs 23.2%), GPT-5 (55.6% vs 44.4%), Copilot (53.9% vs 46.1%).</li><li><strong>Top Job Titles:</strong> CEO (8.2%), Founder & CEO (7.5%), VP Engineering (6.3%), CPO (5.8%), CTO (5.2%).</li><li><strong>Format:</strong> Text posts (72%), Articles (12% — though long-form earns 6.5x more citations per piece), Video (11%), Docs (5%), Images (1%).</li><li><strong>Followers:</strong> 51% of citations come from accounts with <strong>&lt;10K followers</strong> (Under-1K: 11%, 1K–10K: 40%, 10K–100K: 38%, 100K+: 10%).</li><li><strong>Freshness:</strong> 72% original (not reshared); 48% published within last 3 months.</li><li><strong>Suggested Cadence:</strong> 2–3 short-form posts/week + 3–4 long-form articles/month per expert.</li></ul>"
+          }
+        ]
+      },
+      {
+        heading: "9–12. Case Studies, Granular Data, Action Frameworks & Caveats",
+        items: [
+          {
+            id: "m3_cases",
+            title: "Notable Proof Points & Top Granular Categories",
+            sub: "Content quality > audience size",
+            body: "<strong>Individuals:</strong> Matan Feldman (Wall Street Prep, ~20K followers) and Alastair Matchett (~74K followers) rank among most-cited despite modest followings.<br><strong>Top Piece:</strong> <em>'Comparing the Big 4 Consulting Firms: Deloitte, PwC...'</em> matched 32 prompts.<br><strong>Highest Citation Rates (GenAI Lens):</strong> Content Marketing (3.3%), SEO & Search Marketing (2.2%), Data & Analytics (2.0%), B2B Services (1.7%), Tech & SaaS composite (1.6%). Lowest: Marketing Automation (0.9%)."
+          },
+          {
+            id: "m3_frameworks",
+            title: "Action Frameworks & Closing Checklist",
+            sub: "3-Phase Rollout & 5 Execution Rules",
+            body: "<strong>3-Phase Rollout:</strong> (1) <em>Audit & Align</em> (3–5 core topics, map experts, benchmark) → (2) <em>Create & Publish</em> (2–3 posts/wk + 3–4 articles/mo, listicles/comparisons/guides, hard data) → (3) <em>Measure & Adapt</em> (track GenAI Lens monthly, A/B test).<br><strong>Closing Checklist:</strong> Publish through real SMEs (not brand voice); Answer real prompt questions; Use headings/bullets/entities; Depth over polish; Stay recent."
+          },
+          {
+            id: "m3_quality",
+            title: "Data Quality Notes (Important Caveats)",
+            sub: "Read before quoting externally",
+            body: "<div class='note-box'>Two different citation-share growth numbers appear in the report (26% in Sections 2/5 vs 35% in Section 8). Also, Section 4 (16 B2B categories) and Section 10 (GenAI Lens) use different taxonomies—do not mix rows between them.</div>"
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "What percentage of LinkedIn AI citations come from individual member profiles vs. Company Pages?",
+        opts: ["25% individual / 75% company", "50% / 50%", "75% individual / 25% company", "90% individual / 10% company"],
+        ans: 2,
+        exp: "75% of LinkedIn citations come from individual profiles rather than Company Pages across every model tracked."
+      },
+      {
+        q: "What share of citations came from creators with FEWER than 10,000 followers?",
+        opts: ["10%", "25%", "51%", "85%"],
+        ans: 2,
+        exp: "Just over half (51%: 11% under-1K + 40% in 1K–10K) came from profiles with fewer than 10K followers—proving content quality beats audience size."
+      }
+    ]
+  },
+  {
+    id: "m4",
+    num: 4,
+    title: "2026 Examples & LinkedIn Post Ideas",
+    subtitle: "7 fresh 2026 industry stories with lessons and ready-to-write LinkedIn post angles.",
+    sections: [
+      {
+        heading: "7 Recent Campaigns, Scandals & Shifts",
+        items: [
+          {
+            id: "m4_1",
+            title: "1. The Stolen Chocolate That Became a Global Campaign (KitKat / Nestlé)",
+            sub: "March 2026 | Italy | Top PR Prize at Cannes",
+            body: "<strong>What happened:</strong> Thieves stole 413,000 KitKat bars days before Easter. Nestlé announced it openly and launched a barcode scanner so anyone could check if their bar was from the stolen batch. <strong>Result:</strong> 2.2M engagements, 44% of category views on Meta, $224M earned media value.<br><strong>Lesson:</strong> Give the audience something to do (participation spreads). <em>Caveat:</em> Humor only worked because nobody was hurt, nothing was hidden, and the brand had permission to be light-hearted.<br><strong>Post themes:</strong> 'What does the audience do with this' vs 'what do we say'; 3 conditions for crisis humor; Transparency as distribution."
+          },
+          {
+            id: "m4_2",
+            title: "2. The Agency That Faked Its Award Entry (DM9 / Cannes)",
+            sub: "2025–2026 | Verification Crackdown",
+            body: "<strong>What happened:</strong> Brazilian agency DM9 won 12 Cannes awards (including top prize) using AI-altered CNN Brasil footage. All 12 awards were stripped; CCO resigned. Cannes 2026 rules now require leader + client sign-off, human+AI fact-checking, and up to 3-year bans—entries dropped 25.5% (27,000 → 20,050).<br><strong>Lesson:</strong> An industry selling credibility ran on trust rather than verification. AI made cheating easier, not the incentive.<br><strong>Post themes:</strong> Why the scandal wasn't an AI story; Why 25% of entries vanished; Putting client sign-off in contracts."
+          },
+          {
+            id: "m4_3",
+            title: "3. The CEO Who Could Not Eat His Own Burger (McDonald's)",
+            sub: "February 2026 | Big Arch Launch",
+            body: "<strong>What happened:</strong> McDonald's CEO filmed himself trying the Big Arch, repeatedly called it a 'product,' looked uncomfortable, and took a tiny bite. Burger King and Wendy's presidents posted huge enthusiastic bites. BK foot traffic jumped +7.4% YoY vs McDonald's +2.2% (causal link not solely proven).<br><strong>Lesson:</strong> Leader-led content has no safety net—only plausibility holds it up.<br><strong>Post themes:</strong> Executive video fails at briefing, not talent; What the word 'product' reveals; Competitor response as a discipline."
+          },
+          {
+            id: "m4_4",
+            title: "4. AI Answers Are Built Almost Entirely From Journalism",
+            sub: "Muck Rack Study (25M+ cited links across 17 industries)",
+            body: "<strong>What happened:</strong> Across ChatGPT, Claude, and Gemini, <strong>earned media accounted for 84% of all citations</strong> (journalism alone = 27%; paid/advertorial = 0.3%). Stayed 82%–89% across three editions since July 2025.<br><strong>Lesson:</strong> A claim on your own site is just a claim; reported by a journalist, AI can verify it.<br><strong>Post themes:</strong> Why your content hub is invisible to AI; From 'did we get coverage' to 'are we in the answer'; Budget allocation."
+          },
+          {
+            id: "m4_5",
+            title: "5. Consumers Can Smell AI and They Are Punishing It",
+            sub: "Harris Poll / 4As / Infillion (June 2026) + IAB + Cision",
+            body: "<strong>What happened:</strong> 78% of consumers say AI makes ads feel less authentic; 73% trust suspected AI ads less; 63% less likely to buy. Yet 82% of ad execs think young consumers feel positive about AI ads—only 45% actually do (<strong>37-point gap</strong>). Meanwhile 91% of comms pros use GenAI.<br><strong>Lesson:</strong> Using AI to work faster wins; advertising that you used AI loses.<br><strong>Post themes:</strong> AI as machine vs message; The 37-point gap; What belongs in an AI disclosure policy."
+          },
+          {
+            id: "m4_6",
+            title: "6. The Giants Are Shrinking and Focus Is the New Moat",
+            sub: "WPP Restructuring & Singapore Summit (August 2026)",
+            body: "<strong>What happened:</strong> WPP 2025 revenues fell 8.1%, share price hit 17-year low, explored selling Burson. Forrester forecasts 15% agency job cuts in 2026 (after 8% in 2025). Independent leaders say AI erased big agencies' tech-spend advantage (new tech goes broad in ~2 months).<br><strong>Lesson:</strong> Scale used to be the moat. Now <strong>contextual knowledge</strong> (sector, market, language, regulator) and focus are the moat.<br><strong>Post themes:</strong> Small as a strategy; Contextual knowledge; Profitable answer vs correct answer in holding cos."
+          },
+          {
+            id: "m4_7",
+            title: "7. People Have Stopped Trusting Anyone Unlike Themselves",
+            sub: "Edelman Trust Barometer 2026",
+            body: "<strong>What happened:</strong> 7 in 10 unwilling/hesitant to trust someone with different values/background. Trust in government leaders (-16 pts) and news (-11 pts) fell; trust in neighbors/family/friends rose (+11 pts). Business is the only institution seen as both ethical & competent. 62% would consider trusting a distrusted company if a food/lifestyle influencer vouched for it.<br><strong>Lesson:</strong> Corporate voice is losing; <strong>proximate voice</strong> is winning.<br><strong>Post themes:</strong> Why CEO statements are weak; Employees as under-used channels; Designing campaigns around 'who says it'."
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "In Muck Rack's analysis of 25M+ AI citations, what share came from earned media vs. paid/advertorial?",
+        opts: ["40% earned / 30% paid", "84% earned / 0.3% paid", "60% earned / 15% paid", "27% earned / 50% paid"],
+        ans: 1,
+        exp: "Earned media accounted for 84% of AI citations (journalism alone 27%), while paid and advertorial content was just 0.3%."
+      },
+      {
+        q: "What is the '37-point gap' in consumer AI perception?",
+        opts: ["37% of consumers love AI ads", "82% of ad execs think youth like AI ads vs. 45% who actually do", "37% of agencies fired staff", "AI citations grew 37%"],
+        ans: 1,
+        exp: "82% of ad execs believe younger consumers feel positive about AI-generated ads, while only 45% actually do."
+      }
+    ]
+  },
+  {
+    id: "m5",
+    num: 5,
+    title: "Outputs vs. Outcomes (AI Citation = New AVE)",
+    subtitle: "Why 'being found' is an output, 'being chosen' is an outcome, and why more citations can still lose.",
+    sections: [
+      {
+        heading: "The Core Argument & Leoprd 2026 Study",
+        items: [
+          {
+            id: "m5_def",
+            title: "Outputs vs Outcomes & Barcelona Principles V4.0",
+            sub: "PRovoke Media citation | AMEC June 2025 V4.0",
+            body: "<strong>Output:</strong> What you produced (clipping, placement, impression, AI citation).<br><strong>Outcome:</strong> What changed in the person's head (belief, preference, behaviour).<br>AMEC's Barcelona Principles (launched 2010, V4.0 in June 2025) killed AVEs because they measured a big countable number without showing whether anyone changed their mind. It took 15 years to retire AVEs."
+          },
+          {
+            id: "m5_leoprd",
+            title: "Leoprd 'Reputation to Revenue 2026' Study",
+            sub: "Published Sept 29 | 31,200 AI responses analyzed",
+            body: "Tested what AI assistants recommend on unbranded category questions:<br>• <strong>29%</strong> of the time: Brand was AI's first choice<br>• <strong>35%</strong> of the time: Mentioned but passed over<br>• <strong>36%</strong> of the time: Absent entirely<br><strong>The Shocking Finding:</strong> Brands that appeared in the answer but <em>lost</em> to a competitor averaged <strong>9.2 citations</strong>. Brands chosen as the primary recommendation averaged <strong>8.4 citations</strong>. More citations went with losing!"
+          },
+          {
+            id: "m5_sectors",
+            title: "Sector Gaps & Consistency Problem",
+            sub: "Why the content of evidence matters more than volume",
+            body: "<ul><li><strong>Fintech:</strong> Present in 92% of relevant answers, chosen in only 32%.</li><li><strong>Travel & Transport:</strong> Present 90%, chosen 28%.</li><li><strong>Consistency:</strong> Only 40% of repeated tests returned the same recommendation on the same question, platform & market.</li><li><strong>The Shift:</strong> Citation count is the AVE of the AI era. You still need citations to be present (36% were missing, and Muck Rack shows 84% of citations come from earned media), but <em>visibility is an output; preference is an outcome</em>.</li></ul><div class='note-box'>Caveat: Leoprd sells AI visibility advisory and part of the dataset is Australia-weighted—treat sector percentages as directional.</div>"
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "In Leoprd's 2026 study, what happened with brands that had MORE citations (9.2 vs 8.4)?",
+        opts: ["They always won #1", "More citations actually went with losing (passed over)", "They were banned by Google", "They paid for ads"],
+        ans: 1,
+        exp: "Losers averaged 9.2 citations vs. 8.4 for primary recommendations—because what the evidence said mattered more than sheer citation count."
+      }
+    ]
+  },
+  {
+    id: "m6",
+    num: 6,
+    title: "Ancient India 'PR'-Like Examples",
+    subtitle: "5 documented instances of organized public communication—framed with scholarly rigor.",
+    sections: [
+      {
+        heading: "Framing Rule & 5 Documented Cases",
+        items: [
+          {
+            id: "m6_frame",
+            title: "Crucial Framing Note (Say This Openly)",
+            sub: "Intellectual honesty protects credibility",
+            body: "These are documented instances of <em>organised public communication</em> by rulers and institutions that illuminate PR principles—not 'PR itself' (a 20th-century construct).<br><strong>Leave out:</strong> Ramayana/Mahabharata episodes as historical case studies, unverified 'ancient India invented X' claims, or dramatic round numbers without citations.<br><strong>Practical Edge:</strong> Every artifact below is physically inspectable (Girnar rock, Allahabad pillar, Uttaramerur plaques)—photograph them yourself for original visual assets."
+          },
+          {
+            id: "m6_1",
+            title: "1. Ashoka's Edicts (c. 260–232 BCE)",
+            sub: "~33 surviving inscriptions across India, Pakistan, Nepal, Afghanistan, Bangladesh",
+            body: "Earliest: Kandahar Bilingual Rock Inscription (c. 260 BCE, Greek & Aramaic).<br><strong>Mechanisms:</strong> (1) <em>Localisation by audience, not territory</em> (Greek for Greeks, Aramaic for Iranian Kambojas in the same city); (2) <em>Placement where the audience was</em> (frontiers, Lumbini); (3) <em>Permanence as brief</em> (carved on stone to endure); (4) <em>Named owner</em> (Dhamma Mahamatras as comms officers); (5) <em>Internal track separate from external</em> (Kalinga Edicts address Mahamatras directly).<br><em>Check before using:</em> Dhauli/Jaugada Kalinga sites reportedly omit/substitute certain edicts."
+          },
+          {
+            id: "m6_2",
+            title: "2. Rudradaman I, Junagadh (150 CE)",
+            sub: "Girnar hill rock | 20 lines, earliest long classical Sanskrit royal inscription",
+            body: "Records repair of a breached lake (420 cubits long, 75 deep) executed by Minister Suvishakha.<br><strong>Mechanisms:</strong> (1) Credited predecessors (even rival Mauryas: Chandragupta's governor & Ashoka's officer); (2) Stated cost structure ('without taxes or forced labour'); (3) Placed on the exact rock the audience already read (Ashoka's, 400 yrs earlier).<br><strong>Caveat/Lesson:</strong> Last 12 lines praise him; self-authored; tax claim is unaudited—oldest surviving 'annual report problem'."
+          },
+          {
+            id: "m6_3",
+            title: "3. Samudragupta's Prayaga Prashasti (4th Century CE)",
+            sub: "Allahabad Pillar (Prayagraj) | 33-line Sanskrit eulogy by court poet Harisena",
+            body: "Engraved directly below Ashoka's edicts (later Jahangir added his own inscription too—3 rulers across ~1,900 years).<br><strong>Mechanism:</strong> Credibility transfer in stone—attaching his record to the subcontinent's most recognized communication artifact rather than building a new monument (like earning a third-party publication citation vs. self-publishing).<br><strong>Caveat:</strong> Paid court eulogy—separate verifiable geography from 'equal to the gods' praise."
+          },
+          {
+            id: "m6_4",
+            title: "4. Uttaramerur Inscriptions (919 & 921 CE)",
+            sub: "Vaikunta Perumal temple, Kanchipuram | Tamil | Parantaka Chola I",
+            body: "Published full village assembly governance rules (30 wards, qualifications, disqualifications for bribery/unsubmitted accounts, <em>kudavolai</em> lottery selection, 360-day terms) on the meeting hall wall.<br><strong>Move that matters:</strong> The 921 inscription amends the 919 rules—carving v2 publicly next to v1 instead of quietly erasing v1 (parallel: transparent AI/editorial corrections policies).<br><strong>State openly:</strong> Franchise was restricted to land-owning Vedic Brahmins—do not mislabel it 'ancient democracy'."
+          },
+          {
+            id: "m6_5",
+            title: "5. The Arthashastra — And the Error to Avoid",
+            sub: "Scholars: Olivelle, Trautmann, McClish",
+            body: "<strong>Popular error:</strong> Calling it 'Chanakya's 4th century BCE PR playbook.'<br><strong>What scholarship shows:</strong> Kautilya/Chanakya identification is disputed; text evolved in 3 phases (sources c. 150 BCE–50 CE, Kautilya recension c. 50–125 CE, final shastric redaction c. 175–300 CE; Trautmann proposes c. 250 CE).<br><strong>Use it as:</strong> Doctrine on statecraft with honest dating—never as 4th century BCE Mauryan proof in front of international peers."
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "What PR principle does the 921 CE Uttaramerur inscription demonstrate by standing next to the 919 CE inscription?",
+        opts: ["Crisis humor", "Publicly publishing amendments/corrections next to original rules builds more trust", "Celebrity endorsement", "Paid advertising"],
+        ans: 1,
+        exp: "Carving version 2 publicly next to version 1 rather than quietly overwriting it parallels modern transparent corrections & AI disclosure policies."
+      },
+      {
+        q: "Why should you avoid calling the Arthashastra 'Chanakya's 4th-century BCE PR playbook'?",
+        opts: ["It was written in Greek", "Modern scholarship dates its composition/redaction much later (c. 150 BCE – 300 CE) and disputes authorship", "It only covers agriculture", "It was lost"],
+        ans: 1,
+        exp: "Olivelle, Trautmann & McClish establish 3 phases spanning c. 150 BCE to 300 CE, with the Chanakya identification added later in Gupta times."
+      }
+    ]
+  },
+  {
+    id: "m7",
+    num: 7,
+    title: "Top 25 PR Leaders & Their Contributions",
+    subtitle: "Founders, theorists, agency builders, institution builders, global pioneers & the 4 meta-patterns.",
+    sections: [
+      {
+        heading: "Founders (1–6)",
+        items: [
+          { id: "m7_1", title: "1. Ivy Lee (1877–1934, US)", sub: "Press release & proactive disclosure", body: "1906 Declaration of Principles; Atlantic City train wreck & 1914 Ludlow Massacre (Rockefeller visiting mines). <em>Caution:</em> later advised IG Farben (1934 Congressional inquiry)." },
+          { id: "m7_2", title: "2. Edward Bernays (1891–1995, US)", sub: "Public relations counsel & applied psychology", body: "Books: <em>Crystallizing Public Opinion</em> (1923), <em>Propaganda</em> (1928). Don't sell the product—change circumstances ('Torches of Freedom' 1929; Beech-Nut physician survey)." },
+          { id: "m7_3", title: "3. Doris E. Fleischman (1891–1980, US)", sub: "Equal partner in Bernays firm", body: "Directed major client output; edited <em>An Outline of Careers for Women</em> (1928). First married US woman issued a passport in her own name (1925)." },
+          { id: "m7_4", title: "4. Arthur W. Page (1883–1960, US)", sub: "First corporate comms officer (AT&T VP, 1927)", body: "<strong>Page Principles:</strong> Tell the truth, prove it with action, listen, manage for tomorrow, conduct PR as if the whole company depends on it, remain calm/good-humoured. PR is a management function." },
+          { id: "m7_5", title: "5. Carl Byoir (1888–1957, US)", sub: "Third-party campaigns & grassroots mobilisation", body: "FDR President's Birthday Balls (1934, forerunner to March of Dimes); defended A&P by organising farmers & consumers instead of direct lobbying." },
+          { id: "m7_6", title: "6. John W. Hill (1890–1977, US)", sub: "Founded Hill & Knowlton (1927)", body: "Built first multinational PR network. <em>Cautionary legacy:</em> Tobacco Industry Research Committee & 1954 'Frank Statement'—manufacturing scientific doubt." }
+        ]
+      },
+      {
+        heading: "Theory & Measurement (7–11)",
+        items: [
+          { id: "m7_7", title: "7. Scott M. Cutlip (1915–2000, US)", sub: "Research-based PR education", body: "Co-authored <em>Effective Public Relations</em> (1952) and critical history <em>The Unseen Power</em> (1994)." },
+          { id: "m7_8", title: "8. James E. Grunig (b. 1942, US)", sub: "Most cited PR theorist", body: "<strong>Four Models:</strong> Press agentry, public information, two-way asymmetrical, two-way symmetrical. Led IABC Excellence Study proving PR belongs in the C-suite." },
+          { id: "m7_9", title: "9. W. Timothy Coombs (US)", sub: "Situational Crisis Communication Theory (SCCT)", body: "Match crisis response to attributed responsibility (victim, accidental, preventable clusters). Author of <em>Ongoing Crisis Communication</em> (1999)." },
+          { id: "m7_10", title: "10. Katie Delahaye Paine (US)", sub: "Outcomes over clippings; anti-AVE campaigner", body: "<em>Measure What Matters</em> (2011); helped produce AMEC's Barcelona Principles." },
+          { id: "m7_11", title: "11. Anne Gregory (UK)", sub: "Body of knowledge & enforceable ethics", body: "Chaired Global Alliance; led Global Capability Framework; CIPR president." }
+        ]
+      },
+      {
+        heading: "Agency Builders (12–17)",
+        items: [
+          { id: "m7_12", title: "12. Harold Burson (1921–2020, US)", sub: "Co-founded Burson-Marsteller (1953)", body: "Field evolved from 'how should we say it' → 'what should we say' → 'what should we do.' Advised J&J on 1982 Tylenol crisis." },
+          { id: "m7_13", title: "13. Daniel J. Edelman (1920–2013, US)", sub: "Founded Edelman (1952); invented media tour", body: "Toni Twins tour (1950s); built world's largest independent PR firm." },
+          { id: "m7_14", title: "14. Richard Edelman (b. 1954, US)", sub: "Proprietary annual trust research", body: "Launched Edelman Trust Barometer (2001), turning proprietary research into global Davos authority—a move available to any size firm." },
+          { id: "m7_15", title: "15. Tim Bell (1941–2019, UK)", sub: "Cautionary case of client moral weight", body: "Advised Thatcher ('Labour Isn't Working' 1979); Bell Pottinger collapsed in weeks in 2017 after PRCA expulsion over Gupta family work in South Africa." },
+          { id: "m7_16", title: "16. Alan Parker (UK)", sub: "Founded Brunswick (1987)", body: "Defined high-stakes financial/M&A corporate advisory where PR sits alongside bankers and lawyers, not under marketing." },
+          { id: "m7_17", title: "17. Robert L. Dilenschneider (b. 1943, US)", sub: "CEO H&K 1980s → The Dilenschneider Group (1991)", body: "Template for senior practitioners leaving holding companies to build high-margin boutique advisories." }
+        ]
+      },
+      {
+        heading: "Institution Builders & Positioning/Global Pioneers (18–25)",
+        items: [
+          { id: "m7_18", title: "18. Betsy Plank (1924–2010, US)", sub: "PR education & PRSSA", body: "First female PRSA president (1973); Plank Center at Univ. of Alabama." },
+          { id: "m7_19", title: "19. Inez Y. Kaiser (1918–2016, US)", sub: "First African American woman-led PR firm (1957)", body: "Built syndicated fashion column distribution <em>before</em> clients; won 7 Up by admitting she didn't know an answer and returning within a day; advised 3 US Presidents." },
+          { id: "m7_20", title: "20. Ofield Dukes (1932–2011, US)", sub: "Connected PR to civil rights movement", body: "Washington DC practice; worked on MLK Jr. Day comms; mentored generations at Howard University." },
+          { id: "m7_21", title: "21. Al Ries (1926–2022) & Laura Ries (US)", sub: "Build with PR, defend with advertising", body: "<em>Positioning</em> (1981) & <em>The Fall of Advertising and the Rise of PR</em> (2002)." },
+          { id: "m7_22", title: "22. David Meerman Scott (US)", sub: "Direct publishing & Newsjacking", body: "<em>The New Rules of Marketing and PR</em> (2007) & <em>Newsjacking</em> (2011)." },
+          { id: "m7_23", title: "23. Paul Holmes (UK/US)", sub: "Independent scrutiny of PR industry", body: "Founded Holmes Report (PRovoke Media), SABRE Awards (business outcomes over craft), Global 250 rankings." },
+          { id: "m7_24", title: "24. Prema Sagar (India)", sub: "Founded Genesis PR (Nov 1, 1992) & PRCAI", body: "Sold the category ('PR for PR') at India's liberalisation before selling her firm; scaled 5-person basement team across India, later acquired by Burson-Marsteller." },
+          { id: "m7_25", title: "25. Nitin Mantri (India)", sub: "Group CEO Avian WE; First Asian ICCO President", body: "Grew Avian ~40x; led ICCO through pandemic (2019–22); ICCO Hall of Fame (2022). Proved regional industries gain standing via global institutional participation." }
+        ]
+      },
+      {
+        heading: "What the List Actually Tells You (4 Meta-Patterns)",
+        items: [
+          {
+            id: "m7_patterns",
+            title: "4 Synthesis Patterns Across All 25 Leaders",
+            sub: "Why this is more than a reference list",
+            body: "<ol><li><strong>Build an asset, not just a reputation:</strong> Page built principles, Grunig built evidence, Richard Edelman built a dataset, Paul Holmes built rankings, Sagar built an association—assets keep working while you sleep.</li><li><strong>Change behaviour, not just perception:</strong> Bernays changed breakfast, Hill shifted views on evidence, Byoir transformed disease funding.</li><li><strong>Failures are instructive:</strong> Hill and Bell executed brilliantly for clients they should have refused.</li><li><strong>Most applicable move:</strong> Richard Edelman's annual proprietary research—available to a firm of any size and travels across borders without an office.</li></ol>"
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "Which leader coined 'PR for PR' (selling the category in an immature market before selling your firm)?",
+        opts: ["Betsy Plank", "Prema Sagar", "Inez Y. Kaiser", "Anne Gregory"],
+        ans: 1,
+        exp: "Prema Sagar founded Genesis PR in 1992 (India's liberalisation year) and co-founded PRCAI, having to explain and establish PR as a category first."
+      },
+      {
+        q: "What is the key pattern behind Page, Grunig, Richard Edelman, Paul Holmes, and Prema Sagar?",
+        opts: ["They all avoided media", "They built durable industry assets (principles, evidence, datasets, rankings, associations)", "They only worked in tech", "They invented TikTok"],
+        ans: 1,
+        exp: "Building an enduring asset gives the industry something it must refer to, creating authority that compounds."
+      }
+    ]
+  },
+  {
+    id: "m8",
+    num: 8,
+    title: "Personal Branding Keywords (Glossary)",
+    subtitle: "60+ practitioner terms across Foundations, Content, Media Relations, Reputation, Psychology & GEO.",
+    sections: [
+      {
+        heading: "Foundations (12 Terms)",
+        items: [
+          { id: "m8_f1", title: "Personal brand vs. Reputation vs. Brand", sub: "Tom Peters 'The Brand Called You' (1997)", body: "<strong>Personal brand:</strong> What an audience expects from you ('Me Inc.').<br><strong>Reputation vs. brand:</strong> Brand is what you project; reputation is what others conclude. The gap is the work." },
+          { id: "m8_f2", title: "Positioning, Niche & Value Proposition", sub: "Al Ries & Jack Trout (1981)", body: "<strong>Positioning:</strong> Owning one specific idea relative to alternatives.<br><strong>Niche / category of one:</strong> Narrow enough to face few direct competitors (e.g., 'Supply chain lawyer for EV battery makers').<br><strong>Value proposition:</strong> Specific problem solved & for whom in 1 line." },
+          { id: "m8_f3", title: "'Known for' Statement, Brand Pillars & Voice", sub: "Audit & consistency tools", body: "<strong>Known for statement:</strong> 1-sentence answer to 'what are you the go-to person for?'<br><strong>Brand pillars:</strong> 3–5 consistent themes.<br><strong>Brand voice/tone:</strong> Consistent sound across channels." },
+          { id: "m8_f4", title: "Archetype, Promise, Equity, Origin Story & Authenticity Gap", sub: "Mark & Pearson (2001)", body: "<strong>Archetype:</strong> Jungian template (Sage, Rebel).<br><strong>Promise:</strong> Reliable takeaway every interaction.<br><strong>Equity:</strong> Accumulated value (3x fees, inbound, forgiveness).<br><strong>Origin story:</strong> Why you do what you do.<br><strong>Authenticity gap:</strong> Distance between persona and observed behaviour." }
+        ]
+      },
+      {
+        heading: "Content & Visibility (15 Terms)",
+        items: [
+          { id: "m8_c1", title: "Thought Leadership, POV, Content Pillars & Flagship Asset", sub: "Joel Kurtzman (1994)", body: "<strong>Thought leadership:</strong> Original ideas shifting how audiences think (not '5 trends').<br><strong>POV:</strong> Clear, arguable stance.<br><strong>Content pillars:</strong> Topic buckets (e.g., 40/30/30).<br><strong>Signature/flagship asset:</strong> Recurring ownable piece (annual salary report)." },
+          { id: "m8_c2", title: "Newsjacking, PESO, Owned & Earned Media, Byline, Ghostwriting", sub: "Scott (2011) | Dietrich (2014)", body: "<strong>Newsjacking:</strong> Inserting expertise into breaking news.<br><strong>PESO:</strong> Paid, Earned, Shared, Owned.<br><strong>Byline/op-ed:</strong> Article under your name in 3rd-party outlet.<br><strong>Ghostwriting:</strong> Drafted by comms team from exec's genuine ideas." },
+          { id: "m8_c3", title: "SOV, Reach vs Impressions, Engagement Rate, Dark Social, SSI, Advocacy & Tours", sub: "Alexis Madrigal (2012)", body: "<strong>SOV:</strong> % of category mentions.<br><strong>Reach vs Impressions:</strong> Unique people vs total views.<br><strong>Dark social:</strong> Untrackable WhatsApp/DM/email forwards.<br><strong>SSI:</strong> LinkedIn's 0–100 score.<br><strong>Employee advocacy, Speaking circuit & Podcast tour</strong> (audio version of media tour)." }
+        ]
+      },
+      {
+        heading: "Media Relations (11 Terms)",
+        items: [
+          { id: "m8_mr1", title: "Media Training, Key Messages, Message House, Bridging, Sound Bite & Talking Points", sub: "Interview Craft", body: "<strong>Message house:</strong> Roof (umbrella), pillars (supporting), foundation (proof points).<br><strong>Bridging:</strong> Moving from an unwanted question to your message.<br><strong>Sound bite:</strong> Short quotable line ('We sell sleep for CFOs').<br><strong>Talking points:</strong> Tactical points narrower than key messages." },
+          { id: "m8_mr2", title: "Media Kit, Bio Set, Attribution Rules, Embargo & Exclusive", sub: "Journalist Protocol", body: "<strong>Bio set:</strong> 50 / 150 / 300 words.<br><strong>On the record</strong> (quote by name) / <strong>On background</strong> (use without name) / <strong>Off the record</strong> (don't use—always agree definitions first).<br><strong>Embargo:</strong> Don't publish before set time.<br><strong>Exclusive:</strong> One outlet gets story first for prominence." }
+        ]
+      },
+      {
+        heading: "Reputation Management, Psychology & 2024+ AI Terms",
+        items: [
+          { id: "m8_rm1", title: "Audit, Perception Gap, Stakeholder Mapping, Digital Footprint & Search/EEAT", sub: "Diagnostics & Google", body: "<strong>Reputation audit</strong> & <strong>Perception gap</strong> (self-view vs peer-view).<br><strong>Stakeholder mapping:</strong> Ranking people who matter by influence/interest.<br><strong>Search reputation / Page-one results, Knowledge Panel & E-E-A-T</strong> (Experience, Expertise, Authoritativeness, Trustworthiness)." },
+          { id: "m8_rm2", title: "ORM, Sentiment, Social Listening, Issues vs Crisis, Holding Statement, Connected Leadership", sub: "Coombs | Brunswick | Weber Shandwick", body: "<strong>Issues mgmt</strong> (before crisis) vs <strong>Crisis comms</strong> + <strong>Holding statement</strong>.<br><strong>CEO activism</strong>.<br><strong>Connected leadership</strong> (Brunswick: ~50% of employees check CEO socials).<br><strong>CEO reputation premium</strong> (Weber Shandwick: execs estimated 44% of market value)." },
+          { id: "m8_psy", title: "Psychology: Social Proof, Halo Effect, Mere Exposure, Borrowed Credibility", sub: "Cialdini (1984), Thorndike (1920), Zajonc (1968)", body: "<strong>Social proof:</strong> Following peers ('Trusted by 3 of top 5 banks').<br><strong>Halo effect:</strong> One positive trait spills over.<br><strong>Mere exposure:</strong> Repeated exposure builds familiarity.<br><strong>Third-party validation:</strong> FT quote beats self-claim." },
+          { id: "m8_geo", title: "2024+ Terms: GEO, AI Visibility / Share of Model, Founder-Led Content", sub: "Terminology heads-up", body: "<strong>GEO (Generative Engine Optimization):</strong> Shaping how AI describes/recommends you.<br><strong>AI visibility / Share of model:</strong> Frequency & favorability in AI answers.<br><strong>Heads-up:</strong> 'Personal brand' reads as vanity to senior buyers—use <em>executive reputation</em>, <em>leadership visibility</em>, or <em>executive profiling</em>." }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "In a Message House, what are the three structural layers?",
+        opts: ["Headline, Hook, CTA", "Roof (umbrella), Pillars (supporting), Foundation (proof points)", "Paid, Earned, Shared", "Intro, Body, Conclusion"],
+        ans: 1,
+        exp: "A Message House uses the Roof for the umbrella message, Pillars for supporting messages, and Foundation for proof points."
+      },
+      {
+        q: "What phrase should you use instead of 'personal brand' when pitching senior executive buyers?",
+        opts: ["Influencer clout", "Executive reputation or leadership visibility", "Self-promotion", "Fame hacking"],
+        ans: 1,
+        exp: "The guide warns that 'personal brand' reads as vanity to senior buyers; practitioners say 'executive reputation,' 'leadership visibility,' or 'executive profiling'."
+      }
+    ]
+  },
+  {
+    id: "m9",
+    num: 9,
+    title: "2026 Leads & First-Principles Pitching",
+    subtitle: "27 funded 2026 startups across 7 sectors—filtered for budget, cross-border intent & founder positioning.",
+    sections: [
+      {
+        heading: "First-Principles Filtering Logic",
+        items: [
+          {
+            id: "m9_logic",
+            title: "Why These Leads? (First Principles)",
+            sub: "Edelman 2026 + Ries Law + Series A / Cross-border filter",
+            body: "An executive pays for visibility when it has a specific job to do soon: <strong>raising the next round, hiring senior people, or entering a new market</strong>. Every lead raised money in 2026. Leaned toward Series A and cross-border companies (hard-currency buyers). Expert basis: Edelman 2026 (proximate founder voices beat corporate voices) + Ries (build with PR, defend with ads)."
+          }
+        ]
+      },
+      {
+        heading: "EdTech & Healthcare (10 Leads)",
+        items: [
+          {
+            id: "m9_edtech",
+            title: "EdTech (5 Funded Leads)",
+            sub: "UK, France & Egypt",
+            body: "<ul><li><strong>Paul Jung — Medly AI (UK):</strong> $8M seed. UCL-trained doctor turned founder (great positioning asset).</li><li><strong>Dora Palfi — imagi (UK):</strong> $4.5M seed (TechCrunch July 2026).</li><li><strong>Phil Daneshyar — Chalkie (UK):</strong> $4M round (AI lesson-plan builder).</li><li><strong>Jonathan Banon — Ed.ai (France):</strong> $5.4M seed.</li><li><strong>Hossam Hosny — 3C Coding School (Egypt):</strong> $3M seed for regional expansion (MENA thesis fit).</li></ul>"
+          },
+          {
+            id: "m9_health",
+            title: "Healthcare (5 Funded Leads)",
+            sub: "US, France & UK",
+            body: "<ul><li><strong>Kara Egan — Teal Health (US):</strong> $22M Series A (FDA-authorized at-home HPV screening).</li><li><strong>Natalia Birgisson — Flourish Health (US):</strong> $26M (intensive youth mental healthcare).</li><li><strong>Eliott Hoffenberg — Vocca (France):</strong> $20M Series A (flagged as hiring).</li><li><strong>Andrew Steele — Stride (UK):</strong> £4.6M (preventative health; athlete background handle).</li><li><strong>Jenny Duan — Clair Health (US):</strong> $11.6M seed (noninvasive hormone monitor).</li></ul>"
+          }
+        ]
+      },
+      {
+        heading: "Sexual Wellness, Astrology & Logistics (9 Leads)",
+        items: [
+          {
+            id: "m9_sex",
+            title: "Sexual Wellness (4 Funded Leads)",
+            sub: "Thin on LinkedIn; high need for credibility storytelling",
+            body: "<ul><li><strong>Ada Trujillo & Kim Aviv — Mila (Miami):</strong> $2.5M pre-seed (outsiders to industry—need credibility story).</li><li><strong>Kevin Eisenfrats — Contraline (US):</strong> $92.5M Series B (Phase 3 male contraceptive gel—public credibility affects regulators/partners).</li><li><strong>Liza Löf — Readily Diagnostics (Sweden):</strong> €811K (affordable STI testing).</li><li><strong>Evvy (US):</strong> $40M Series B Sept 2026 (co-founder Priyanka Jain—recheck).</li></ul>"
+          },
+          {
+            id: "m9_astro",
+            title: "Astrology Exception & Logistics (5 Funded Leads)",
+            sub: "Downside-exposure pitch + Autonomy/Trade founders",
+            body: "<ul><li><strong>Nitin Verma — InstaAstro (Noida):</strong> $12M Series A, international diaspora expansion. LinkedIn firing post sparked fierce backlash—candidate for 'downside exposure' risk advisory (frame as risk, not criticism).</li><li><strong>Naman Pushp — Airbound (India):</strong> $37M Series A (autonomous delivery drones, TechCrunch).</li><li><strong>Eyal Cohen — Humble (US):</strong> $24M seed (20 yrs Apple/Uber ATG/Waabi).</li><li><strong>Patrick Thelen — Procuros (Germany):</strong> €20M Series A (autonomous B2B trade).</li><li><strong>Glynn LoPresti — Takt (US):</strong> $9.25M Series A (second-time founder).</li></ul>"
+          }
+        ]
+      },
+      {
+        heading: "E-Commerce & B2B Enterprise Tech (8 Leads)",
+        items: [
+          {
+            id: "m9_ecom",
+            title: "E-Commerce (4 Funded Leads)",
+            sub: "AI shopping agents & cross-border expansion",
+            body: "<ul><li><strong>Max Sinclair — Azoma (UK):</strong> $11.2M Series A (helps brands get recommended by AI shopping agents—exact 'being found vs being chosen' thesis!).</li><li><strong>Camille van Horne — Highstock (US):</strong> $30M Series A (excess inventory marketplace).</li><li><strong>Jennifer Phan — Passionfroot (Germany):</strong> $15M (expanding B2B creator marketplace into US—classic new-market buyer).</li><li><strong>Taher Alblowe — Rwaj (Saudi Arabia):</strong> $1.2M pre-seed (GCC lead, early-stage).</li></ul>"
+          },
+          {
+            id: "m9_b2b",
+            title: "B2B Enterprise Tech (4 Funded Leads)",
+            sub: "High-budget Series A & technical founders",
+            body: "<ul><li><strong>Jan Philipp Haas — Conduct (UK):</strong> $60M Series A (ex-Palantir).</li><li><strong>Fryderyk Wiatrowski — Viktor (UK):</strong> $75M Series A (Oxford maths, ex-Meta).</li><li><strong>Florin Tufan — Veridion (Romania):</strong> $20M Series A (real-time business map).</li><li><strong>Badr Al-Malluh — Gaia (Saudi Arabia):</strong> $1.5M pre-seed.</li></ul>"
+          }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        q: "Which lead's product directly mirrors the 'being found vs. being chosen' AI thesis?",
+        opts: ["InstaAstro", "Max Sinclair — Azoma (UK)", "Airbound", "3C Coding School"],
+        ans: 1,
+        exp: "Azoma raised $11.2M Series A to help brands get discovered and recommended by AI shopping agents."
+      }
+    ]
+  }
+];
+
+const FLASHCARDS = [
+  { front: "PESO Model", back: "Paid, Earned, Shared, Owned — created by Gini Dietrich (Spin Sucks, 2014) to unify PR, content, and paid channels." },
+  { front: "STEPPS Framework", back: "Jonah Berger (Contagious): Social Currency, Triggers, Emotion, Public, Practical Value, Stories." },
+  { front: "Four Models of PR", back: "James Grunig: Press Agentry, Public Information, Two-Way Asymmetrical, Two-Way Symmetrical." },
+  { front: "SCCT (Crisis)", back: "W. Timothy Coombs: Situational Crisis Communication Theory — match response to Victim, Accidental, or Preventable responsibility clusters." },
+  { front: "75% vs 25% (LinkedIn AI Study)", back: "75% of LinkedIn AI citations come from individual member profiles vs. 25% from Company Pages." },
+  { front: "84% vs 0.3% (Muck Rack Study)", back: "Earned media drives 84% of AI citations across ChatGPT, Claude & Gemini; paid/advertorial drives 0.3%." },
+  { front: "Leoprd 2026 Paradox", back: "Losing brands averaged 9.2 citations vs 8.4 for primary recommendations. 'Being found is an output; being chosen is an outcome.'" },
+  { front: "Page Principles", back: "Arthur W. Page: Tell the truth, prove it with action, listen, manage for tomorrow, conduct PR as if the whole company depends on it." },
+  { front: "Ashoka's Edicts Lesson", back: "Localise by audience (not territory), place where the audience is, build for durability, name an owner, separate internal comms." },
+  { front: "Dark Social", back: "Coined by Alexis Madrigal (2012): Sharing analytics can't track (WhatsApp forwards, DMs, private group chats)." },
+  { front: "Message House", back: "Roof (umbrella message) + Pillars (supporting messages) + Foundation (proof points)." },
+  { front: "Prema Sagar's 'PR for PR'", back: "In an immature market (India 1992), you have to sell and establish the category before you can sell your firm." }
+];
+
+const BADGES = [
+  { id: "b_first", icon: "🌱", name: "First Step", desc: "Complete your first study item", check: s => s.checked.length >= 1 },
+  { id: "b_quiz", icon: "🎯", name: "Sharp Mind", desc: "Pass at least 3 module quizzes", check: s => s.quizzesPassed.length >= 3 },
+  { id: "b_half", icon: "🔥", name: "Halfway Architect", desc: "Complete 50% of all study items", check: (s, tot) => s.checked.length >= Math.ceil(tot / 2) },
+  { id: "b_flash", icon: "⚡", name: "Flash Master", desc: "Flip 10+ flashcards in the Arena", check: s => s.flips >= 10 },
+  { id: "b_all", icon: "🏆", name: "Cannes Grand Prix", desc: "Complete all 9 PR Repository modules", check: (s, tot) => s.checked.length >= tot }
+];
+
+/* =========================================================
+   STATE MANAGEMENT (localStorage)
+========================================================= */
+const STORAGE_KEY = "pr_crux_learning_state_v1";
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || {
+  checked: [],
+  quizzesPassed: [],
+  xp: 0,
+  flips: 0,
+  activeModule: "m1"
+};
+
+let currentView = "learn";
+let searchQuery = "";
+let flashIndex = 0;
+let flashFlipped = false;
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function getAllItemIds() {
+  const ids = [];
+  MODULES.forEach(m => m.sections.forEach(s => s.items.forEach(it => ids.push(it.id))));
+  return ids;
+}
+
+function isModuleDone(mod) {
+  const ids = [];
+  mod.sections.forEach(s => s.items.forEach(it => ids.push(it.id)));
+  return ids.length > 0 && ids.every(id => state.checked.includes(id));
+}
+
+function getRank(xp) {
+  if (xp >= 1200) return "Level 6: Cannes Grand Prix";
+  if (xp >= 900)  return "Level 5: Reputation Architect";
+  if (xp >= 600)  return "Level 4: Crisis Whisperer";
+  if (xp >= 350)  return "Level 3: Narrative Strategist";
+  if (xp >= 150)  return "Level 2: Media Pitcher";
+  return "Level 1: PR Rookie";
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display = "none"; }, 2400);
+}
+
+/* =========================================================
+   RENDERING
+========================================================= */
+function updateHUD() {
+  const allIds = getAllItemIds();
+  const doneCount = state.checked.length;
+  const pct = Math.round((doneCount / allIds.length) * 100);
+  const doneMods = MODULES.filter(isModuleDone).length;
+
+  document.getElementById("rankBadge").textContent = getRank(state.xp);
+  document.getElementById("xpText").textContent = `${state.xp} XP`;
+  document.getElementById("overallProgressFill").style.width = `${pct}%`;
+  document.getElementById("overallPercent").textContent = `${pct}% (${doneCount}/${allIds.length} cards)`;
+  document.getElementById("modulesCount").textContent = `${doneMods} / ${MODULES.length} Modules`;
+}
+
+function renderSidebar() {
+  const nav = document.getElementById("navList");
+  nav.innerHTML = MODULES.map(m => {
+    const ids = [];
+    m.sections.forEach(s => s.items.forEach(it => ids.push(it.id)));
+    const doneInMod = ids.filter(id => state.checked.includes(id)).length;
+    const allDone = doneInMod === ids.length;
+    const isActive = currentView === "learn" && state.activeModule === m.id && !searchQuery;
+
+    return `
+      <button class="nav-btn ${isActive ? 'active' : ''} ${allDone ? 'done' : ''}" onclick="selectModule('${m.id}')">
+        <span style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <span class="status-dot">${allDone ? '✓' : m.num}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.title}</span>
+        </span>
+        <span class="nav-meta">${doneInMod}/${ids.length}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function toggleItem(id) {
+  const idx = state.checked.indexOf(id);
+  if (idx === -1) {
+    state.checked.push(id);
+    state.xp += 15;
+    showToast("+15 XP! Card marked complete");
+  } else {
+    state.checked.splice(idx, 1);
+    state.xp = Math.max(0, state.xp - 15);
+  }
+  saveState();
+  renderAll();
+}
+
+function markModuleComplete(modId) {
+  const mod = MODULES.find(m => m.id === modId);
+  let added = 0;
+  mod.sections.forEach(s => s.items.forEach(it => {
+    if (!state.checked.includes(it.id)) {
+      state.checked.push(it.id);
+      added++;
+    }
+  }));
+  if (added > 0) {
+    state.xp += added * 15 + 25;
+    showToast(`Module Complete! +${added * 15 + 25} XP 🎉`);
+  } else {
+    showToast("Module already completed!");
+  }
+  saveState();
+  renderAll();
+}
+
+function answerQuiz(modId, qIdx, optIdx, btn) {
+  const mod = MODULES.find(m => m.id === modId);
+  const q = mod.quiz[qIdx];
+  const parent = btn.parentElement;
+  if (parent.dataset.answered) return;
+  parent.dataset.answered = "1";
+
+  const buttons = parent.querySelectorAll(".quiz-opt");
+  buttons.forEach((b, i) => {
+    if (i === q.ans) b.classList.add("correct");
+    else if (i === optIdx) b.classList.add("wrong");
+  });
+
+  const expEl = document.createElement("div");
+  expEl.style.fontSize = "0.82rem";
+  expEl.style.marginTop = "6px";
+  expEl.style.color = optIdx === q.ans ? "#86efac" : "#fca5a5";
+  expEl.textContent = (optIdx === q.ans ? "✅ Correct! " : "❌ Not quite. ") + q.exp;
+  parent.appendChild(expEl);
+
+  if (optIdx === q.ans) {
+    state.xp += 25;
+    if (!state.quizzesPassed.includes(`${modId}_${qIdx}`)) {
+      state.quizzesPassed.push(`${modId}_${qIdx}`);
+    }
+    saveState();
+    updateHUD();
+    showToast("+25 Bonus XP!");
+  }
+}
+
+function renderCardHTML(it) {
+  const isChecked = state.checked.includes(it.id);
+  return `
+    <div class="card ${isChecked ? 'checked' : ''}">
+      <div class="card-header">
+        <div>
+          <h4 class="card-title">${it.title}</h4>
+          <div class="card-sub">${it.sub}</div>
+        </div>
+        <button class="check-toggle" onclick="toggleItem('${it.id}')">
+          ${isChecked ? '✓ Done' : 'Mark Done'}
+        </button>
+      </div>
+      <div class="card-body">${it.body}</div>
+    </div>
+  `;
+}
+
+function renderMain() {
+  const container = document.getElementById("mainContent");
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase();
+    const matches = [];
+    MODULES.forEach(m => m.sections.forEach(s => s.items.forEach(it => {
+      if ((it.title + it.sub + it.body).toLowerCase().includes(q)) {
+        matches.push({ mod: m.title, item: it });
+      }
+    })));
+    container.innerHTML = `
+      <div class="module-hero">
+        <div>
+          <h2>Search Results for "${searchQuery}"</h2>
+          <p>Found ${matches.length} matching item(s) across the repository.</p>
+        </div>
+        <button class="btn btn-outline" onclick="clearSearch()">Clear Search</button>
+      </div>
+      <div class="card-grid">
+        ${matches.length ? matches.map(m => renderCardHTML(m.item)).join("") : "<p style='color:var(--muted)'>No matches found.</p>"}
+      </div>
+    `;
+    return;
+  }
+
+  if (currentView === "flashcards") {
+    const card = FLASHCARDS[flashIndex];
+    container.innerHTML = `
+      <div class="module-hero">
+        <div>
+          <h2>⚡ Flashcard Arena</h2>
+          <p>Click the card to flip and test your memory on core PR frameworks, stats & leaders. (+5 XP per flip)</p>
+        </div>
+        <span class="rank-badge">Card ${flashIndex + 1} of ${FLASHCARDS.length}</span>
+      </div>
+      <div class="flashcard-stage">
+        <div class="flashcard" onclick="flipFlashcard()">
+          <small>${flashFlipped ? 'Answer / Takeaway' : 'Concept / Prompt (Click to Reveal)'}</small>
+          <h3>${flashFlipped ? '' : card.front}</h3>
+          <p>${flashFlipped ? card.back : 'Tap to flip card'}</p>
+        </div>
+        <div style="display:flex; justify-content:center; gap:12px;">
+          <button class="btn btn-outline" onclick="prevFlash()">← Previous</button>
+          <button class="btn" onclick="nextFlash()">Next Card →</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (currentView === "badges") {
+    const tot = getAllItemIds().length;
+    container.innerHTML = `
+      <div class="module-hero">
+        <div>
+          <h2>🏆 Achievements & Mastery</h2>
+          <p>Unlock badges as you progress through all 9 modules, pass quizzes, and master the flashcards.</p>
+        </div>
+      </div>
+      <div class="badges-grid">
+        ${BADGES.map(b => {
+          const unlocked = b.check(state, tot);
+          return `
+            <div class="badge-card ${unlocked ? 'unlocked' : ''}">
+              <div class="badge-icon">${b.icon}</div>
+              <h4 style="margin:0 0 4px;">${b.name}</h4>
+              <p style="margin:0; font-size:0.8rem; color:var(--muted);">${b.desc}</p>
+              <div style="margin-top:8px; font-size:0.74rem; font-weight:700; color:${unlocked ? 'var(--warn)' : 'var(--muted)'}">
+                ${unlocked ? 'UNLOCKED' : 'LOCKED'}
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+    return;
+  }
+
+  // Learn View
+  const mod = MODULES.find(m => m.id === state.activeModule) || MODULES[0];
+  const modDone = isModuleDone(mod);
+  const modIdx = MODULES.findIndex(m => m.id === mod.id);
+  const nextMod = MODULES[modIdx + 1];
+
+  container.innerHTML = `
+    <div class="module-hero">
+      <div>
+        <span class="tag" style="color:var(--accent); margin-bottom:6px;">MODULE ${mod.num} OF ${MODULES.length}</span>
+        <h2>${mod.title}</h2>
+        <p>${mod.subtitle}</p>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn ${modDone ? 'btn-success' : ''}" onclick="markModuleComplete('${mod.id}')">
+          ${modDone ? '✓ Module Completed' : '✓ Mark Whole Module Complete'}
+        </button>
+        ${nextMod ? `<button class="btn btn-outline" onclick="selectModule('${nextMod.id}')">Next: ${nextMod.num}. ${nextMod.title.split(' ')[0]} →</button>` : ''}
+      </div>
+    </div>
+
+    ${mod.sections.map(sec => `
+      <div class="section-group">
+        <h3 class="section-title">◆ ${sec.heading}</h3>
+        <div class="card-grid">
+          ${sec.items.map(renderCardHTML).join("")}
+        </div>
+      </div>
+    `).join("")}
+
+    ${mod.quiz && mod.quiz.length ? `
+      <div class="quiz-box">
+        <h3 style="margin:0 0 14px; color:var(--accent-2);">🧠 Module ${mod.num} Quick Knowledge Check (+25 XP each)</h3>
+        ${mod.quiz.map((q, qi) => `
+          <div class="quiz-q">
+            <p>${qi + 1}. ${q.q}</p>
+            ${q.opts.map((opt, oi) => `
+              <button class="quiz-opt" onclick="answerQuiz('${mod.id}', ${qi}, ${oi}, this)">${opt}</button>
+            `).join("")}
+          </div>
+        `).join("")}
+      </div>
+    ` : ''}
+  `;
+}
+
+function selectModule(id) {
+  state.activeModule = id;
+  currentView = "learn";
+  searchQuery = "";
+  document.getElementById("searchInput").value = "";
+  saveState();
+  updatePills();
+  renderAll();
+  document.getElementById("sidebar").classList.remove("open");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function switchView(view) {
+  currentView = view;
+  searchQuery = "";
+  document.getElementById("searchInput").value = "";
+  updatePills();
+  renderAll();
+}
+
+function updatePills() {
+  document.getElementById("tabLearn").classList.toggle("active", currentView === "learn");
+  document.getElementById("tabFlash").classList.toggle("active", currentView === "flashcards");
+  document.getElementById("tabBadges").classList.toggle("active", currentView === "badges");
+}
+
+function handleSearch(val) {
+  searchQuery = val;
+  renderMain();
+}
+
+function clearSearch() {
+  searchQuery = "";
+  document.getElementById("searchInput").value = "";
+  renderAll();
+}
+
+function flipFlashcard() {
+  flashFlipped = !flashFlipped;
+  if (flashFlipped) {
+    state.flips += 1;
+    state.xp += 5;
+    saveState();
+    updateHUD();
+  }
+  renderMain();
+}
+
+function nextFlash() {
+  flashIndex = (flashIndex + 1) % FLASHCARDS.length;
+  flashFlipped = false;
+  renderMain();
+}
+
+function prevFlash() {
+  flashIndex = (flashIndex - 1 + FLASHCARDS.length) % FLASHCARDS.length;
+  flashFlipped = false;
+  renderMain();
+}
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("open");
+}
+
+function copyShareSummary() {
+  const tot = getAllItemIds().length;
+  const pct = Math.round((state.checked.length / tot) * 100);
+  const doneMods = MODULES.filter(isModuleDone).length;
+  const text = `PR Crux Learning Progress: ${pct}% Complete (${doneMods}/9 modules, ${state.checked.length}/${tot} cards) | ${getRank(state.xp)} (${state.xp} XP)`;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("Progress summary copied to clipboard!");
+  }).catch(() => {
+    alert(text);
+  });
+}
+
+function resetAllProgress() {
+  if (confirm("Reset all XP, badges, and completed cards?")) {
+    state = { checked: [], quizzesPassed: [], xp: 0, flips: 0, activeModule: "m1" };
+    saveState();
+    renderAll();
+    showToast("Progress reset.");
+  }
+}
+
+function renderAll() {
+  updateHUD();
+  renderSidebar();
+  renderMain();
+}
+
+renderAll();
+</script>
+</body>
+</html>
