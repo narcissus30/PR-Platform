@@ -1,6 +1,8 @@
 (() => {
   const panel = document.getElementById('guideChat');
   const launch = document.getElementById('chatLaunch');
+  const navLaunch = document.getElementById('chatNavLaunch');
+  let returnFocus = launch;
   const input = document.getElementById('chatInput');
   const log = document.getElementById('chatMessages');
   const form = document.getElementById('chatForm');
@@ -12,9 +14,13 @@
     panel.hidden = !open;
     launch.hidden = open;
     launch.setAttribute('aria-expanded', String(open));
-    (open ? input : launch).focus();
+    navLaunch.setAttribute('aria-expanded', String(open));
+    (open ? input : returnFocus).focus();
   }
-  launch.addEventListener('click', () => toggle(true));
+  [launch, navLaunch].forEach(button => button.addEventListener('click', () => {
+    returnFocus = button;
+    toggle(true);
+  }));
   document.getElementById('chatClose').addEventListener('click', () => toggle(false));
   panel.addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false); });
   function message(text, role) {
